@@ -1,0 +1,12 @@
+{
+    "name": "drupal/access_by_taxonomy",
+    "description": "Manages access to content depending on the taxonomy terms applied to it.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/access_by_taxonomy",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/access_by_taxonomy",
+        "source": "https://git.drupalcode.org/project/access_by_taxonomy"
+    }
+}
+

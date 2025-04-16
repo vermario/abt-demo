@@ -1,0 +1,15 @@
+name: Access By Taxonomy
+description: Manages access to content depending on the taxonomy terms applied to it.
+type: module
+core_version_requirement: ^10 || ^11
+package: 'Access control'
+dependencies:
+  - drupal:taxonomy
+  - drupal:field_ui
+  - drupal:user
+
+
+# Information added by Drupal.org packaging script on 2025-03-07
+version: '1.1.0'
+project: 'access_by_taxonomy'
+datestamp: 1741334862

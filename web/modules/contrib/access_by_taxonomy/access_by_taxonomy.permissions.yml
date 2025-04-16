@@ -1,0 +1,3 @@
+permission_callbacks:
+  - \Drupal\access_by_taxonomy\AccessByTaxonomyPermissions::nodeTypePermissions
+  - \Drupal\access_by_taxonomy\AccessByTaxonomyPermissions::taxonomyVocabularyPermissions

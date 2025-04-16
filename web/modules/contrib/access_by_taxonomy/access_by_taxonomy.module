@@ -1,0 +1,343 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the Access By Taxonomy module.
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\access_by_taxonomy\AccessByTaxonomyService;
+use Drupal\node\Entity\NodeType;
+use Drupal\node\NodeInterface;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\user\RoleInterface;
+
+/**
+ * Implements hook_entity_bundle_create().
+ */
+function access_by_taxonomy_entity_bundle_create($entity_type_id, $bundle) {
+  if ($entity_type_id == 'taxonomy_term') {
+    /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+    $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+
+    foreach (
+      [
+        AccessByTaxonomyService::ALLOWED_USERS_FIELD => 'Allowed users',
+        AccessByTaxonomyService::ALLOWED_ROLES_FIELD => 'Allowed roles',
+      ] as $field_name => $field_label) {
+      $access_by_taxonomy_service->addFieldToVocabulary($bundle, [$field_name => $field_label]);
+    }
+  }
+}
+
+/**
+ * Implements hook_node_grants().
+ */
+function access_by_taxonomy_node_grants(AccountInterface $account, $operation) {
+  // We're only interested in providing rules for viewing content,
+  // update and delete can be handled elsewhere by the content module
+  // and its permissions.
+  $grants = [];
+  if ($operation == 'view') {
+    $user_roles = $account->getRoles();
+    $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+    $roles_grants_given = $access_by_taxonomy_service->getRoleGrant($user_roles);
+    $grants[AccessByTaxonomyService::ROLE_REALM] = $roles_grants_given;
+    $grants[AccessByTaxonomyService::USER_REALM] = [$account->id()];
+    $grants[AccessByTaxonomyService::PUBLIC_REALM] = [1];
+    if ($account->hasPermission('view own unpublished content')) {
+      $grants[AccessByTaxonomyService::OWN_UNPUBLISHED_REALM] = [$account->id()];
+    }
+    $grants[AccessByTaxonomyService::OWNER_REALM] = [$account->id()];
+    // Add all the grants for the 'access by taxonomy view any $type_id content'
+    // permission.
+    foreach (NodeType::loadMultiple() as $type) {
+      $type_id = $type->id();
+      if ($account->hasPermission("access by taxonomy view any $type_id content")) {
+        $grants[AccessByTaxonomyService::VIEW_ANY_REALM . $type_id] = [1];
+      }
+    }
+
+  }
+  return $grants;
+}
+
+/**
+ * Implements hook_node_access_records().
+ */
+function access_by_taxonomy_node_access_records(NodeInterface $node) {
+
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+  $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+  $restricted_grants = [];
+  foreach ($node->getTranslationLanguages() as $langcode => $language) {
+    $translated_node = $node->getTranslation($langcode);
+    $restricted_grants[$langcode] = $access_by_taxonomy_service->getTranslationGrants($translated_node);
+  }
+
+  return array_reduce($restricted_grants, 'array_merge', []);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for node form.
+ *
+ * Add a details element to explain the access rules for the node.
+ */
+function access_by_taxonomy_form_node_form_alter(&$form, FormStateInterface $formState, $_form_id) {
+  /** @var \Drupal\node\NodeForm $form_object */
+  $form_object = $formState->getFormObject();
+
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $form_object->getEntity();
+  $langcode = $node->language()->getId();
+  $translation = $node->getTranslation($langcode);
+
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+  $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+
+  $form['access_by_taxonomy'] = [
+    '#type' => 'details',
+    '#title' => t('Access By Taxonomy'),
+    '#attributes' => ['id' => 'access_by_taxonomy_fieldset'],
+    '#group' => 'advanced',
+    '#weight' => -5,
+    '#tree' => TRUE,
+    '#open' => TRUE,
+    '#attached' => [
+      'library' => [
+        'system/diff',
+        'core/drupal.dialog.ajax',
+      ],
+    ],
+  ];
+  $form['access_by_taxonomy']['access_by_taxonomy_status_messages_area'] = [
+    '#attributes' => ['id' => 'access_by_taxonomy_status_messages_area'],
+    '#markup' => '<div id="access_by_taxonomy_status_messages"></div>',
+  ];
+  $node_grants = $access_by_taxonomy_service->getTranslationGrants($translation);
+  $msg = $access_by_taxonomy_service->describeGrants($node_grants, $translation);
+  // Put the messages in a list.
+  ksort($msg);
+  $form['access_by_taxonomy']['access_by_taxonomy_message'] = [
+    '#theme' => 'item_list',
+    '#prefix' => '<h5>' . t('Current access settings:') . '</h5>',
+    '#items' => $msg,
+  ];
+
+  $form['access_by_taxonomy']['show-changes'] = [
+    '#type' => 'button',
+    '#value' => t('Preview access changes'),
+    '#attributes' => [
+      'class' => [
+        'use-ajax',
+      ],
+    ],
+    '#ajax' => [
+      'callback' => ['\Drupal\access_by_taxonomy\AccessByTaxonomyService', 'nodeChangedAccessDiff'],
+      'disable-refocus' => FALSE,
+      'event' => 'click',
+      'progress' => [
+        'type' => 'throbber',
+        'message' => t('Loading changes...'),
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for taxonomy term form.
+ *
+ * Group the access fields in a details element.
+ */
+function access_by_taxonomy_form_taxonomy_term_form_alter(&$form, FormStateInterface $formState, $form_id) {
+  /** @var \Drupal\taxonomy\TermForm  $formObj*/
+  $formObj = $formState->getFormObject();
+
+  /** @var \Drupal\taxonomy\Entity\Term $term */
+  $term = $formObj->getEntity();
+
+  $add_details = FALSE;
+  if ($term->hasField(AccessByTaxonomyService::ALLOWED_USERS_FIELD)) {
+    $form[AccessByTaxonomyService::ALLOWED_USERS_FIELD]['#group'] = 'access';
+    $add_details = TRUE;
+  }
+  if ($term->hasField(AccessByTaxonomyService::ALLOWED_ROLES_FIELD)) {
+    $form[AccessByTaxonomyService::ALLOWED_ROLES_FIELD]['#group'] = 'access';
+    $add_details = TRUE;
+  }
+  if ($add_details) {
+    $form['access'] = [
+      '#type'        => 'details',
+      '#title'       => t('Permissions'),
+      '#description' => t('To limit access to this term by user(s) or role(s), select users or roles below. If left empty, all users will have access to content related to this taxonomy term and this taxonomy term itself.'),
+      '#attributes'  => ['id' => 'fieldset_term_access'],
+      '#weight'      => -5,
+      '#tree'        => TRUE,
+      '#open'        => TRUE,
+    ];
+  }
+}
+
+/**
+ * Implements hook_entity_entity_type_update().
+ */
+function access_by_taxonomy_taxonomy_term_update(EntityInterface $entity) {
+  // If we have set a flag to pause the access rebuild, we don't need to do
+  // anything.
+  if (\Drupal::state()->get('access_by_taxonomy_pause_access_rebuild', FALSE)) {
+    return;
+  }
+
+  /** @var \Drupal\taxonomy\Entity\Term $original */
+  // Get the previous version of the term being updated:
+  $original = $entity->original;
+
+  // Can't get the original version of the term, do nothing:
+  if (!$original) {
+    return;
+  }
+
+  // Check if the updated term includes changes to the allowed roles field:
+  $old_roles = $original->get(AccessByTaxonomyService::ALLOWED_ROLES_FIELD)->getValue();
+  $new_roles = $entity->get(AccessByTaxonomyService::ALLOWED_ROLES_FIELD)->getValue();
+
+  // Check if the updated term includes changes to the allowed users field:
+  $old_users = $original->get(AccessByTaxonomyService::ALLOWED_USERS_FIELD)->getValue();
+  $new_users = $entity->get(AccessByTaxonomyService::ALLOWED_USERS_FIELD)->getValue();
+
+  // Only run the update function the changes impact the access settings:
+  if ($old_roles !== $new_roles || $old_users !== $new_users) {
+    \Drupal::logger('access_by_taxonomy')->notice('Term :tid access settings have been updated.', [':tid' => $entity->id()]);
+    // Rebuild the node access for all nodes that have this term.
+    /** @var \Drupal\access_by_taxonomy\NodeAccessService $node_access_service */
+    $node_access_service = \Drupal::service('access_by_taxonomy.node_access');
+    $node_access_service->rebuildTermAccess($entity->id());
+  }
+}
+
+/**
+ * Implements hook_entity_entity_type_delete().
+ */
+function access_by_taxonomy_taxonomy_term_delete(EntityInterface $entity) {
+  // Delete the grants for this term.
+  $termId = $entity->id();
+  /** @var \Drupal\access_by_taxonomy\NodeAccessService $node_access_service */
+  $node_access_service = \Drupal::service('access_by_taxonomy.node_access');
+  $node_access_service->rebuildTermAccess($termId);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert().
+ */
+function access_by_taxonomy_user_role_insert(RoleInterface $entity) {
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+  $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+  try {
+    $access_by_taxonomy_service->insertRoleGrant($entity->id());
+  }
+  catch (Exception $e) {
+    \Drupal::logger('access_by_taxonomy')->error('Error inserting role grant for role @role: @error',
+      [
+        '@error' => $e->getMessage(),
+        '@role' => $entity->id(),
+      ]
+    );
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function access_by_taxonomy_user_role_delete(RoleInterface $entity) {
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+  $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+  $access_by_taxonomy_service->cleanUpNodeAccessTableForRoleId($entity->id());
+  $access_by_taxonomy_service->deleteRoleGrant($entity->id());
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_access().
+ */
+function access_by_taxonomy_taxonomy_term_access(Term $term, $op, AccountInterface $account) {
+  // Check if the user has access to the term they're viewing.
+  if ($op === 'view' && \Drupal::service('access_by_taxonomy.service')->canUserAccessTerm($term->id(), $account) === FALSE) {
+    return AccessResult::forbidden();
+  }
+  // Stay neutral in all other cases:
+  return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_views_query_TAG_alter().
+ */
+function access_by_taxonomy_query_access_by_taxonomy_alter(AlterableInterface $query) {
+  // You can assign the "access_by_taxonomy" tag to an entity query to filter
+  // out all taxonomy terms that the currently logged-in user does not
+  // have access to.
+  // Current user.
+  $user = \Drupal::currentUser();
+  $roles = $user->getRoles();
+  // Get the taxonomy terms that the user has access to.
+  $q = \Drupal::entityQuery('taxonomy_term');
+  $and = $q->andConditionGroup();
+  $or = $q->orConditionGroup();
+  // So either no users and roles are specified.
+  $and->condition(AccessByTaxonomyService::ALLOWED_USERS_FIELD, NULL, 'IS NULL');
+  $and->condition(AccessByTaxonomyService::ALLOWED_ROLES_FIELD, NULL, 'IS NULL');
+  $or->condition($and);
+  // Or the user is allowed.
+  $or->condition(AccessByTaxonomyService::ALLOWED_USERS_FIELD, $user->id(), '=');
+  // Or the roles the user have are allowed.
+  $or->condition(AccessByTaxonomyService::ALLOWED_ROLES_FIELD, $roles, 'IN');
+  $q->accessCheck(TRUE);
+  $results = $q
+    ->condition($or)
+    ->execute();
+  $query->condition('tid', $results, 'IN');
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+function access_by_taxonomy_user_delete(AccountInterface $account) {
+  // Delete the grants for this user.
+  $userId = $account->id();
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $node_access_service */
+  $node_access_service = \Drupal::service('access_by_taxonomy.service');
+  $node_access_service->cleanUserAccess($userId);
+}
+
+/**
+ * Implements hook_entity_field_access().
+ */
+function access_by_taxonomy_entity_field_access($operation, FieldDefinitionInterface $field_definition, AccountInterface $account, ?FieldItemListInterface $items = NULL) {
+  // We hook only for edit operations.
+  if ($operation !== 'edit') {
+    return AccessResult::neutral();
+  }
+  // Get the entity type and bundle.
+  $entity_type = $field_definition->getTargetEntityTypeId();
+  // Check if the field is an 'Access by Taxonomy' field.
+  if ($entity_type !== 'taxonomy_term') {
+    return AccessResult::neutral();
+  }
+  $type_id = $field_definition->getTargetBundle();
+  if ($type_id === NULL) {
+    return AccessResult::neutral();
+  }
+  $allowed_roles_field = AccessByTaxonomyService::ALLOWED_ROLES_FIELD;
+  $allowed_users_field = AccessByTaxonomyService::ALLOWED_USERS_FIELD;
+  // Restrict access to the allowed roles and allowed users fields.
+  if ($field_definition->getName() === $allowed_roles_field || $field_definition->getName() === $allowed_users_field) {
+    $condition = $account->hasPermission("access by taxonomy administer access for terms in $type_id") || $account->hasPermission('administer taxonomy');
+
+    return AccessResult::forbiddenIf(!$condition);
+  }
+  return AccessResult::neutral();
+}

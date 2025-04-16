@@ -1,0 +1,12 @@
+services:
+  logger.channel.access_by_taxonomy:
+    parent: logger.channel_base
+    arguments: [ 'access_by_taxonomy' ]
+
+  access_by_taxonomy.node_access:
+    class: Drupal\access_by_taxonomy\NodeAccessService
+    arguments: [ '@access_by_taxonomy.service', '@entity_type.manager', '@database', '@node.grant_storage', '@logger.channel.access_by_taxonomy', '@cache_tags.invalidator' ]
+
+  access_by_taxonomy.service:
+    class: Drupal\access_by_taxonomy\AccessByTaxonomyService
+    arguments: ['@entity_field.manager', '@entity_type.manager', '@logger.channel.access_by_taxonomy', '@database', '@current_user', '@string_translation']

@@ -1,0 +1,157 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Access By Taxonomy module.
+ */
+
+use Drupal\access_by_taxonomy\AccessByTaxonomyService;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\taxonomy\Entity\Vocabulary;
+
+/**
+ * Implements hook_schema().
+ */
+function access_by_taxonomy_schema() {
+  $schema = [];
+
+  // Specifications for table 'access_by_taxonomy_role_gid'.
+  $schema['access_by_taxonomy_role_gid'] = [
+    'description' => "Stores the gid assigned to a user role.",
+    'fields'      => [
+      'rid'            => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'gid'            => [
+        'type'     => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key'    => [
+      'gid',
+    ],
+  ];
+
+  return $schema;
+
+}
+
+/**
+ * Implements hook_install().
+ */
+function access_by_taxonomy_install() {
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+  $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+
+  $access_by_taxonomy_service->populateRoleGrants();
+  // Load all vocabularies.
+  $vocabularies = Vocabulary::loadMultiple();
+  foreach ($vocabularies as $vocabulary) {
+    foreach ([
+      AccessByTaxonomyService::ALLOWED_USERS_FIELD => 'Allowed users',
+      AccessByTaxonomyService::ALLOWED_ROLES_FIELD => 'Allowed roles',
+    ] as $field_name => $field_label) {
+      $access_by_taxonomy_service->addFieldToVocabulary((string) $vocabulary->id(), [$field_name => $field_label]);
+    }
+  }
+  // Rebuild node access.
+  node_access_rebuild(TRUE);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function access_by_taxonomy_uninstall() {
+  /** @var \Drupal\access_by_taxonomy\AccessByTaxonomyService $access_by_taxonomy_service */
+  $access_by_taxonomy_service = \Drupal::service('access_by_taxonomy.service');
+  $roles = Drupal::service('entity_type.manager')->getStorage('user_role')->loadMultiple();
+  foreach ($roles as $role) {
+    $roleId = $role->id();
+    $access_by_taxonomy_service->deleteRoleGrant($roleId);
+  }
+  // Delete existing field instances:
+  $vocabularies = Vocabulary::loadMultiple();
+  foreach ($vocabularies as $vocabulary) {
+    foreach ([
+      AccessByTaxonomyService::ALLOWED_USERS_FIELD,
+      AccessByTaxonomyService::ALLOWED_ROLES_FIELD,
+    ] as $field_name) {
+      // Calculate the ID of the field instance in the configuration:
+      $vocab_id = $vocabulary->id();
+      $id = "taxonomy_term.$vocab_id.$field_name";
+      $field = FieldConfig::load($id);
+      if ($field) {
+        $field->delete();
+      }
+    }
+  }
+  // Delete field storage:
+  foreach ([
+    AccessByTaxonomyService::ALLOWED_USERS_FIELD,
+    AccessByTaxonomyService::ALLOWED_ROLES_FIELD,
+  ] as $field_name) {
+    $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+    if ($field_storage) {
+      // Delete the field storage.
+      $field_storage->delete();
+    }
+  }
+  // Rebuild node access.
+  node_access_rebuild(TRUE);
+}
+
+/**
+ * Fix translatable settings for field storage and field instances.
+ */
+function access_by_taxonomy_update_8001() {
+  // Set existing field instances as non-translatable:
+  $vocabularies = Vocabulary::loadMultiple();
+  foreach ($vocabularies as $vocabulary) {
+    foreach ([
+      AccessByTaxonomyService::ALLOWED_USERS_FIELD,
+      AccessByTaxonomyService::ALLOWED_ROLES_FIELD,
+    ] as $field_name) {
+      $vocab_id = $vocabulary->id();
+      $id = "taxonomy_term.$vocab_id.$field_name";
+      $field = FieldConfig::load($id);
+      if ($field) {
+        $field->setTranslatable(FALSE);
+        $field->save();
+      }
+    }
+  }
+  // Set field storage as not translatable:
+  foreach ([
+    AccessByTaxonomyService::ALLOWED_USERS_FIELD,
+    AccessByTaxonomyService::ALLOWED_ROLES_FIELD,
+  ] as $field_name) {
+    $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+    if ($field_storage) {
+      // Set the field storage as not translatable:
+      $field_storage->setTranslatable(FALSE);
+      $field_storage->save();
+    }
+  }
+}
+
+/**
+ * Set the field storage to persist even if there are no fields using it.
+ */
+function access_by_taxonomy_update_8002() {
+  foreach ([
+    AccessByTaxonomyService::ALLOWED_USERS_FIELD,
+    AccessByTaxonomyService::ALLOWED_ROLES_FIELD,
+  ] as $field_name) {
+    $field_storage = FieldStorageConfig::load('taxonomy_term.' . $field_name);
+    if ($field_storage) {
+      // Set the field storage to persist even if there are no fields using it:
+      $field_storage->set('persist_with_no_fields', TRUE);
+      $field_storage->save();
+    }
+  }
+}

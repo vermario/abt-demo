@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0da10972a6137897050663263b36f25d",
+    "content-hash": "039f9aca009ba27526c81aa9f27229db",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -1084,6 +1084,63 @@
                 }
             ],
             "time": "2024-02-05T11:35:39+00:00"
+        },
+        {
+            "name": "drupal/access_by_taxonomy",
+            "version": "1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/access_by_taxonomy.git",
+                "reference": "1.1.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/access_by_taxonomy-1.1.0.zip",
+                "reference": "1.1.0",
+                "shasum": "d47db3b99a9862c767c3b9669177309d629eaa63"
+            },
+            "require": {
+                "drupal/core": "^10 || ^11"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "1.1.0",
+                    "datestamp": "1741334859",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "hkirsman",
+                    "homepage": "https://www.drupal.org/user/1860980"
+                },
+                {
+                    "name": "joey-santiago",
+                    "homepage": "https://www.drupal.org/user/1631800"
+                },
+                {
+                    "name": "maijs",
+                    "homepage": "https://www.drupal.org/user/179101"
+                },
+                {
+                    "name": "vermario",
+                    "homepage": "https://www.drupal.org/user/121062"
+                }
+            ],
+            "description": "Manages access to content depending on the taxonomy terms applied to it.",
+            "homepage": "https://www.drupal.org/project/access_by_taxonomy",
+            "support": {
+                "source": "https://git.drupalcode.org/project/access_by_taxonomy",
+                "issues": "https://www.drupal.org/project/issues/access_by_taxonomy"
+            }
         },
         {
             "name": "drupal/core",

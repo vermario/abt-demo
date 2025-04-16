@@ -1,0 +1,9 @@
+uuid: ec587257-ac4e-4444-8bf3-69185ee3a52c
+langcode: en
+status: true
+dependencies: {  }
+id: premium_subscriber
+label: 'Premium subscriber'
+weight: 4
+is_admin: false
+permissions: {  }

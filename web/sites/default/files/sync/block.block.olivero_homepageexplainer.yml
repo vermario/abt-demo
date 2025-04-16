@@ -1,0 +1,25 @@
+uuid: 20f5d2a2-dcbf-42cc-adcf-48c45e81e504
+langcode: en
+status: true
+dependencies:
+  content:
+    - 'block_content:basic:680e2783-a3b5-407e-b998-19e789454ccc'
+  module:
+    - block_content
+  theme:
+    - olivero
+id: olivero_homepageexplainer
+theme: olivero
+region: content
+weight: -7
+provider: null
+plugin: 'block_content:680e2783-a3b5-407e-b998-19e789454ccc'
+settings:
+  id: 'block_content:680e2783-a3b5-407e-b998-19e789454ccc'
+  label: 'homepage explainer'
+  label_display: '0'
+  provider: block_content
+  status: true
+  info: ''
+  view_mode: full
+visibility: {  }

@@ -1,0 +1,14 @@
+uuid: e1b0c428-2ad2-42c3-9c0d-909dafc7f051
+langcode: en
+status: true
+dependencies:
+  config:
+    - user.role.premium_subscriber
+  module:
+    - user
+id: user_remove_role_action.premium_subscriber
+label: 'Remove the Premium subscriber role from the selected user(s)'
+type: user
+plugin: user_remove_role_action
+configuration:
+  rid: premium_subscriber

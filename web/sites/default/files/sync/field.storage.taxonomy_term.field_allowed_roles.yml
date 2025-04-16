@@ -1,0 +1,22 @@
+uuid: 28c4f224-6e72-4791-bec8-5c4b0eca63b6
+langcode: en
+status: true
+dependencies:
+  module:
+    - taxonomy
+    - user
+_core:
+  default_config_hash: RTOQYmjNmpFysq5KQRxUgYK6NsRSJSny6M2hsgSrJ_k
+id: taxonomy_term.field_allowed_roles
+field_name: field_allowed_roles
+entity_type: taxonomy_term
+type: entity_reference
+settings:
+  target_type: user_role
+module: core
+locked: false
+cardinality: -1
+translatable: false
+indexes: {  }
+persist_with_no_fields: true
+custom_storage: false

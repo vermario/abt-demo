@@ -5,7 +5,9 @@ dependencies:
   config:
     - node.type.article
     - node.type.page
+    - taxonomy.vocabulary.article_type
   module:
+    - access_by_taxonomy
     - comment
     - contextual
     - file
@@ -21,6 +23,8 @@ weight: 2
 is_admin: false
 permissions:
   - 'access administration pages'
+  - 'access by taxonomy administer access for terms in article_type'
+  - 'access by taxonomy view any article content'
   - 'access content overview'
   - 'access contextual links'
   - 'access files overview'
@@ -29,15 +33,24 @@ permissions:
   - 'create article content'
   - 'create page content'
   - 'create url aliases'
+  - 'delete all revisions'
+  - 'delete any article content'
+  - 'delete any page content'
   - 'delete article revisions'
   - 'delete own article content'
   - 'delete own files'
   - 'delete own page content'
   - 'delete page revisions'
+  - 'edit any article content'
+  - 'edit any page content'
   - 'edit own article content'
   - 'edit own comments'
   - 'edit own page content'
   - 'revert all revisions'
+  - 'revert article revisions'
+  - 'revert page revisions'
   - 'view all revisions'
+  - 'view article revisions'
   - 'view own unpublished content'
+  - 'view page revisions'
   - 'view the administration theme'

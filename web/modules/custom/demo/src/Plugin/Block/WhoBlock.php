@@ -29,7 +29,7 @@ final class WhoBlock extends BlockBase {
     $roles = $user->getRoles();
     $roles_separated = implode(', ', $roles);
     $build['content'] = [
-      '#markup' => $this->t('Hello <strong>@name</strong>! Your roles are: <strong>@roles', ['@name' => $user_name, '@roles' => $roles_separated]),
+      '#markup' => $this->t('Welcome <strong>@name</strong>! Your roles are: <strong>@roles', ['@name' => $user_name, '@roles' => $roles_separated]),
       '#prefix' => '<div class="who-block">',
       '#suffix' => '</div>',
       '#cache' => [

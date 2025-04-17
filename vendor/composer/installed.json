@@ -1188,6 +1188,67 @@
             "install-path": "../../web/modules/contrib/access_by_taxonomy"
         },
         {
+            "name": "drupal/bootstrap",
+            "version": "5.0.1",
+            "version_normalized": "5.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/bootstrap.git",
+                "reference": "5.0.1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/bootstrap-5.0.1.zip",
+                "reference": "5.0.1",
+                "shasum": "9eae7b38545bf898bc6c7cc0cc63fb8a05afc795"
+            },
+            "require": {
+                "drupal/core": "^10.3 || ^11.0",
+                "twbs/bootstrap": "^5.0.0"
+            },
+            "type": "drupal-theme",
+            "extra": {
+                "drupal": {
+                    "version": "5.0.1",
+                    "datestamp": "1726511777",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Alberto Siles",
+                    "homepage": "https://www.drupal.org/user/827704",
+                    "email": "alberto@siles.pe"
+                },
+                {
+                    "name": "joseph.olstad",
+                    "homepage": "https://www.drupal.org/user/1321830"
+                },
+                {
+                    "name": "shelane",
+                    "homepage": "https://www.drupal.org/user/2674989"
+                },
+                {
+                    "name": "wundo",
+                    "homepage": "https://www.drupal.org/user/25523"
+                }
+            ],
+            "description": "Bootstrap 5 base theme.",
+            "homepage": "https://www.drupal.org/project/bootstrap",
+            "support": {
+                "source": "https://git.drupalcode.org/project/bootstrap"
+            },
+            "install-path": "../../web/themes/contrib/bootstrap"
+        },
+        {
             "name": "drupal/core",
             "version": "11.1.6",
             "version_normalized": "11.1.6.0",
@@ -1527,6 +1588,79 @@
             ],
             "description": "Core and its dependencies with known-compatible minor versions. Require this project INSTEAD OF drupal/core.",
             "install-path": null
+        },
+        {
+            "name": "drupal/material_base",
+            "version": "3.0.0",
+            "version_normalized": "3.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/material_base.git",
+                "reference": "3.0.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/material_base-3.0.0.zip",
+                "reference": "3.0.0",
+                "shasum": "98cca2d480a2e39e4283461d67a4d80d31023772"
+            },
+            "require": {
+                "drupal/core": "^9 || ^10 || ^11"
+            },
+            "type": "drupal-theme",
+            "extra": {
+                "drupal": {
+                    "version": "3.0.0",
+                    "datestamp": "1714678839",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Andrey Yurtaev (iamdroid)",
+                    "homepage": "https://www.drupal.org/u/iamdroid",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "beloglazov91",
+                    "homepage": "https://www.drupal.org/user/3431497"
+                },
+                {
+                    "name": "branimir.juranic",
+                    "homepage": "https://www.drupal.org/user/3331091"
+                },
+                {
+                    "name": "iamdroid",
+                    "homepage": "https://www.drupal.org/user/892728"
+                },
+                {
+                    "name": "kalabro",
+                    "homepage": "https://www.drupal.org/user/1399638"
+                },
+                {
+                    "name": "pavel.bulat",
+                    "homepage": "https://www.drupal.org/user/3568596"
+                },
+                {
+                    "name": "Spleshka",
+                    "homepage": "https://www.drupal.org/user/810676"
+                }
+            ],
+            "description": "Base theme inspirited by Material Design concept.",
+            "homepage": "https://www.drupal.org/project/material_base",
+            "support": {
+                "source": "https://git.drupalcode.org/project/material_base",
+                "issues": "https://www.drupal.org/project/issues/material_base"
+            },
+            "install-path": "../../web/themes/contrib/material_base"
         },
         {
             "name": "drush/drush",
@@ -6247,6 +6381,59 @@
                 }
             ],
             "install-path": "../symfony/yaml"
+        },
+        {
+            "name": "twbs/bootstrap",
+            "version": "v5.3.5",
+            "version_normalized": "5.3.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/twbs/bootstrap.git",
+                "reference": "85f23534bd2de8041354b297516cf21959091b31"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/twbs/bootstrap/zipball/85f23534bd2de8041354b297516cf21959091b31",
+                "reference": "85f23534bd2de8041354b297516cf21959091b31",
+                "shasum": ""
+            },
+            "replace": {
+                "twitter/bootstrap": "self.version"
+            },
+            "time": "2025-04-04T18:20:30+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mark Otto",
+                    "email": "markdotto@gmail.com"
+                },
+                {
+                    "name": "Jacob Thornton",
+                    "email": "jacobthornton@gmail.com"
+                }
+            ],
+            "description": "The most popular front-end framework for developing responsive, mobile first projects on the web.",
+            "homepage": "https://getbootstrap.com/",
+            "keywords": [
+                "JS",
+                "css",
+                "framework",
+                "front-end",
+                "mobile-first",
+                "responsive",
+                "sass",
+                "web"
+            ],
+            "support": {
+                "issues": "https://github.com/twbs/bootstrap/issues",
+                "source": "https://github.com/twbs/bootstrap/tree/v5.3.5"
+            },
+            "install-path": "../twbs/bootstrap"
         },
         {
             "name": "twig/twig",

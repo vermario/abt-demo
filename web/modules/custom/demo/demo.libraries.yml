@@ -1,0 +1,4 @@
+whoami:
+  css:
+    theme:
+      css/whoami.css: {}

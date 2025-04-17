@@ -26,8 +26,10 @@ final class WhoBlock extends BlockBase {
     $logged_in_user = \Drupal::currentUser();
     $user = \Drupal\user\Entity\User::load($logged_in_user->id());
     $user_name = $user->getDisplayName();
+    $roles = $user->getRoles();
+    $roles_separated = implode(', ', $roles);
     $build['content'] = [
-      '#markup' => $this->t('Hello <strong>@name!', ['@name' => $user_name]),
+      '#markup' => $this->t('Hello <strong>@name</strong>! Your roles are: <strong>@roles', ['@name' => $user_name, '@roles' => $roles_separated]),
       '#prefix' => '<div class="who-block">',
       '#suffix' => '</div>',
       '#cache' => [
